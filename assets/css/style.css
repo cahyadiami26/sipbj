@@ -238,3 +238,36 @@ textarea.input{resize:vertical;min-height:90px}
 .asset-label .al-code{font-family:ui-monospace,monospace;font-weight:800;font-size:10px;margin-top:4px;word-break:break-all}
 .asset-label .al-name{font-size:10px;color:#475569}
 .asset-label .al-sub{font-size:9px;color:#64748b}
+
+/* ---------- Kompatibilitas alias class modul ---------- */
+.page-head{display:flex;align-items:center;gap:14px;flex-wrap:wrap;margin-bottom:20px}
+.page-head h1{font-size:21px}
+.card-head{display:flex;align-items:center;justify-content:space-between;gap:12px;flex-wrap:wrap;padding:16px 22px;border-bottom:1px solid var(--slate-200);margin:-22px -22px 18px -22px;background:linear-gradient(180deg,#fff,var(--slate-50));border-radius:var(--radius) var(--radius) 0 0}
+.card-head h3{font-size:14.5px;font-weight:700}
+.btn-group{display:flex;gap:8px;flex-wrap:wrap;align-items:center}
+.muted{color:var(--slate-500)}
+.mb{margin-bottom:20px}
+.mt{margin-top:14px}
+.center{text-align:center}
+.grow{flex:1}
+
+/* ---------- Label QR batch print ---------- */
+.label-grid{display:grid;grid-template-columns:repeat(4,1fr);gap:6mm}
+@media(max-width:900px){.label-grid{grid-template-columns:repeat(2,1fr)}}
+.qr-label{border:1.5px dashed #94a3b8;border-radius:10px;padding:10px;text-align:center;break-inside:avoid;background:#fff;min-height:170px;display:flex;flex-direction:column;align-items:center;justify-content:center}
+.qr-label img{width:110px;height:110px;image-rendering:pixelated}
+.qr-label .kode{font-family:ui-monospace,monospace;font-weight:800;font-size:10px;margin-top:6px;word-break:break-all;color:#0f172a}
+.qr-label .nama{font-size:10.5px;color:#334155;font-weight:600;line-height:1.3}
+.qr-label .sub{font-size:9px;color:#64748b}
+.qr-missing{width:110px;height:110px;display:flex;align-items:center;justify-content:center;background:var(--slate-100);border-radius:8px;color:var(--slate-400);font-size:10px;font-weight:700;text-align:center;padding:6px}
+@media print{.label-grid{grid-template-columns:repeat(4,1fr);gap:4mm}.qr-label{border-color:#cbd5e1}}
+
+/* ---------- Scan opname ---------- */
+.scan-box{display:flex;gap:10px;align-items:end;flex-wrap:wrap;background:linear-gradient(135deg,#0f766e,#0d9488);border-radius:14px;padding:18px;color:#fff;margin-bottom:18px}
+.scan-box .field{flex:1;min-width:220px}
+.scan-box label{color:#ccfbf1}
+.scan-box .input{border:none;font-size:16px;font-family:ui-monospace,monospace}
+
+/* ---------- Ringkasan mini tabel dalam card ---------- */
+.mini-tbl td,.mini-tbl th{padding:7px 10px !important;font-size:12.5px}
+.dot-status{width:9px;height:9px;border-radius:50%;display:inline-block;margin-right:6px}
