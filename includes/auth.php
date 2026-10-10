@@ -98,6 +98,7 @@ function requireLogin(): void
 
 function authId(): int          { return (int)($_SESSION['user_id'] ?? 0); }
 function authName(): string     { return $_SESSION['user_name'] ?? 'Pengguna'; }
+function authEmail(): ?string   { return $_SESSION['user_email'] ?? null; }
 function authUsername(): string { return $_SESSION['username'] ?? ''; }
 function authRole(): string     { return $_SESSION['role'] ?? 'user'; }
 function authPosition(): ?string{ return $_SESSION['position'] ?? null; }

@@ -31,9 +31,9 @@ INSERT INTO lokasi (id,nama,kode,tipe,parent_id) VALUES
 -- ---------- KEBUTUHAN ----------
 INSERT INTO kebutuhan (id,nomor_kebutuhan,judul,unit_pemohon,pengajuan_oleh,tanggal_pengajuan,prioritas,alasan,status,total_estimasi,verifikasi_oleh,verifikasi_tgl,persetujuan_bidang_oleh,persetujuan_bidang_tgl,persetujuan_dirut_oleh,persetujuan_dirut_tgl,finalisasi_keuangan_oleh,finalisasi_keuangan_tgl) VALUES
 (1,'KBT-202610-0001','Pengadaan Laptop Staff IT','IT',4,'2026-10-01','TINGGI','Laptop lama sering mati mendadak, menghambat pekerjaan.','DITERIMA',25000000,7,'2026-10-02 09:00:00',3,'2026-10-02 13:00:00',2,'2026-10-02 15:00:00',6,'2026-10-03 09:00:00'),
-(2,'KBT-202610-0002','Rehabilitasi Kursi Ruang Rapat','Kesekretariatan',5,'2026-10-03','SEDANG','Kursi ruang rapat rusak 6 unit.','DISETUJUI',4500000,NULL,NULL,NULL,NULL,NULL,NULL,NULL),
+(2,'KBT-202610-0002','Rehabilitasi Kursi Ruang Rapat','Kesekretariatan',5,'2026-10-03','SEDANG','Kursi ruang rapat rusak 6 unit.','DISETUJUI',4500000,NULL,NULL,NULL,NULL,NULL,NULL,NULL,NULL),
 (3,'KBT-202610-0003','Printer Label untuk Gudang','Pengadaan',10,'2026-10-05','SEDANG','Mendukung pencetakan label QR aset.','DIVERIFIKASI',3200000,7,'2026-10-06 10:30:00',NULL,NULL,NULL,NULL,NULL,NULL),
-(4,'KBT-202610-0004','AC Server Room','Infokom',12,'2026-10-07','SEGERA','Suhu server room melebihi ambang aman.','DIAJUKAN',7500000,NULL,NULL,NULL,NULL,NULL,NULL,NULL),
+(4,'KBT-202610-0004','AC Server Room','Infokom',12,'2026-10-07','SEGERA','Suhu server room melebihi ambang aman.','DIAJUKAN',7500000,NULL,NULL,NULL,NULL,NULL,NULL,NULL,NULL),
 (5,'KBT-202609-0005','Proyektor Ruang Direktur','Keuangan',9,'2026-09-20','RENDAH','Proyektor lama lampu putus.','MASUK RENCANA PENGADAAN',6800000,7,'2026-09-21 08:00:00',3,'2026-09-22 09:00:00',2,'2026-09-22 14:00:00',NULL,NULL);
 
 INSERT INTO kebutuhan_item (kebutuhan_id,nama_barang,spesifikasi,satuan,jumlah,estimasi_harga,estimasi_total) VALUES
