@@ -14,12 +14,16 @@ require_once __DIR__ . '/db.php';
 ini_set('session.cookie_domain', SSO_DOMAIN);
 session_name('LJU_APPS');
 
+$isHttps = (isset($_SERVER['HTTPS']) && $_SERVER['HTTPS'] !== 'off')
+        || (($_SERVER['HTTP_X_FORWARDED_PROTO'] ?? '') === 'https');
+
 session_set_cookie_params([
     'lifetime' => 86400,
     'path'     => '/',
     'domain'   => SSO_DOMAIN,
-    'secure'   => isset($_SERVER['HTTPS']) && $_SERVER['HTTPS'] !== 'off',
-    'httponly' => true,
+    // Produksi: cookie Secure aktif saat HTTPS. Dev lokal (http): bisa dimatikan via APP_COOKIE_SECURE=false
+    'secure'   => $isHttps && APP_COOKIE_SECURE,
+    'httponly'  => true,
     'samesite' => 'Lax',
 ]);
 

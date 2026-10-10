@@ -11,12 +11,17 @@
 define('APP_NAME', 'SIPBJ');
 define('APP_TITLE', 'Sistem Pengadaan Barang/Jasa');
 define('APP_COMPANY', 'PT. Lampung Jasa Utama');
-define('APP_URL', 'https://pengadaan.lju.co.id');
+define('APP_URL', getenv('APP_BASE_URL') ?: 'https://pengadaan.lju.co.id');
 define('APP_VERSION', '1.0.0');
 
 // ---------- Portal SSO ----------
 define('SSO_PORTAL', 'https://lju.co.id/dashboard/');
-define('SSO_DOMAIN', '.lju.co.id');
+define('SSO_DOMAIN', getenv('APP_COOKIE_DOMAIN') !== false ? getenv('APP_COOKIE_DOMAIN') : '.lju.co.id');
+
+// ---------- Lingkungan (development / production) ----------
+define('APP_ENV', getenv('APP_ENV') ?: 'production');
+// Di dev (HTTP lokal), cookie Secure/domain global bisa ditolak browser -> set APP_COOKIE_SECURE=false
+define('APP_COOKIE_SECURE', filter_var(getenv('APP_COOKIE_SECURE') ?? 'true', FILTER_VALIDATE_BOOLEAN));
 
 // ---------- Aset & Logo Perusahaan ----------
 define('LOGO_BASE', 'https://lju.co.id/assets/images/logo/');
