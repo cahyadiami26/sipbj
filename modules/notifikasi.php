@@ -123,7 +123,7 @@ if ($isPeng || $isPimp) {
     ];
     $rows = qAll("SELECT pk.*, k.tnkb FROM peminjaman_kendaraan pk JOIN kendaraan k ON k.id=pk.kendaraan_id WHERE pk.status='DIPINJAM' AND pk.tanggal_kembali < CURDATE() ORDER BY pk.tanggal_kembali");
     foreach ($rows as $r) $groups['antri_pinjam'][] = [
-      'title' => '⚠ Kendaraan Belum Dikembalikan — ' . $r['nomor_pinjam'],
+      'title' => 'Kendaraan Belum Dikembalikan — ' . $r['nomor_pinjam'],
       'desc'  => ($r['tnkb'] ?? '') . ' • jatuh tempo ' . tgl($r['tanggal_kembali']),
       'url'   => 'modules/peminjaman.php?id=' . $r['id'],
       'time'  => $r['tanggal_kembali'], 'tone' => 'red', 'action' => 'Konfirmasi pengembalian',
@@ -164,49 +164,55 @@ if ($isPeng || $isPimp) {
 /* urutkan grup: antrian tugas lebih dulu untuk pengelola */
 $orderOwn = ['antri_keb','antri_ren','antri_atk','antri_krk','antri_pinjam','antri_fas','servis','pimpinan','atk','kerusakan','pinjam','fasilitas'];
 $labels = [
-  'antri_keb' => '📋 Pengajuan Kebutuhan menunggu Anda',
-  'antri_ren' => '🛒 Rencana Pengadaan menunggu persetujuan',
-  'antri_atk' => '✏️ Permintaan ATK menunggu proses',
-  'antri_krk' => '🔧 Laporan Kerusakan menunggu tindak lanjut',
-  'antri_pinjam' => '🚗 Peminjaman Kendaraan perlu diproses',
-  'antri_fas' => '💡 Tiket Fasilitas perlu ditangani',
-  'servis'    => '🛠 Pengingat Servis Kendaraan',
-  'pimpinan'  => '👔 Pemantauan Pimpinan',
-  'atk'       => '✏️ Status permintaan ATK Anda',
-  'kerusakan' => '🔧 Status laporan kerusakan Anda',
-  'pinjam'    => '🚗 Status pengajuan kendaraan Anda',
-  'fasilitas' => '💡 Status tiket fasilitas Anda',
+  'antri_keb' => 'Pengajuan Kebutuhan menunggu Anda',
+  'antri_ren' => 'Rencana Pengadaan menunggu persetujuan',
+  'antri_atk' => 'Permintaan ATK menunggu proses',
+  'antri_krk' => 'Laporan Kerusakan menunggu tindak lanjut',
+  'antri_pinjam' => 'Peminjaman Kendaraan perlu diproses',
+  'antri_fas' => 'Tiket Fasilitas perlu ditangani',
+  'servis'    => 'Pengingat Servis Kendaraan',
+  'pimpinan'  => 'Pemantauan Pimpinan',
+  'atk'       => 'Status permintaan ATK Anda',
+  'kerusakan' => 'Status laporan kerusakan Anda',
+  'pinjam'    => 'Status pengajuan kendaraan Anda',
+  'fasilitas' => 'Status tiket fasilitas Anda',
 ];
+$groupIcons = ['antri_keb'=>'file','antri_ren'=>'cart','antri_atk'=>'box','antri_krk'=>'wrench','antri_pinjam'=>'car','antri_fas'=>'lamp','servis'=>'wrench','pimpinan'=>'users','atk'=>'box','kerusakan'=>'wrench','pinjam'=>'car','fasilitas'=>'lamp'];
 $total = array_sum(array_map('count', $groups));
 ?>
 <div class="page-head">
-  <div><h1><?= iconSvg('bell') ?> Notifikasi Saya</h1>
-    <p class="muted">Ringkasan seluruh item yang berkaitan dengan Anda dan antrean pekerjaan sesuai role <b><?= e($role) ?></b>.</p></div>
+  <div class="grow"><h1>Notifikasi Saya</h1>
+    <p class="small muted">Ringkasan seluruh item yang berkaitan dengan Anda dan antrean pekerjaan sesuai role <b><?= e($role) ?></b>.</p></div>
   <a class="btn btn-outline" href="<?= u('index.php') ?>"><?= iconSvg('dashboard') ?> Ke Dashboard</a>
 </div>
 
 <?php if (!$total): ?>
-  <div class="card"><div class="card-body empty" style="padding:48px;text-align:center">
-    <div style="font-size:34px;margin-bottom:8px">✅</div>
-    Tidak ada notifikasi. Semua beres!
-  </div></div>
+<div class="card"><div class="card-body">
+  <div class="alert-item info"><?= iconSvg('check') ?><div><b>Tidak ada notifikasi.</b><small>Semua pekerjaan terkendali.</small></div></div>
+</div></div>
 <?php endif; ?>
 
 <?php foreach ($orderOwn as $key): if (empty($groups[$key])) continue; $itemsG = $groups[$key]; ?>
-<div class="card notif-card tone-<?= e($itemsG[0]['tone'] ?? 'slate') ?>">
-  <div class="card-head"><h3><?= e($labels[$key] ?? $key) ?> <span class="pill"><?= count($itemsG) ?></span></h3></div>
-  <div class="card-body list-plain">
-    <?php foreach ($itemsG as $it): ?>
-      <div class="row-line">
-        <span class="dot-status ds-<?= e($it['tone']) ?>"></span>
-        <div style="flex:1">
-          <a class="notif-title" href="<?= u($it['url']) ?>"><?= e($it['title']) ?></a>
-          <div class="muted small"><?= e($it['desc']) ?></div>
-        </div>
-        <span class="muted small" style="white-space:nowrap"><?= tgl($it['time']) ?></span>
-        <a class="btn btn-sm btn-outline" href="<?= u($it['url']) ?>"><?= e($it['action']) ?> <?= iconSvg('next') ?></a>
-      </div>
-    <?php endforeach; ?>
+<div class="card">
+  <div class="card-head"><h3><?= iconSvg($groupIcons[$key] ?? 'bell') ?> <?= e($labels[$key] ?? $key) ?> <span class="badge badge-slate"><?= count($itemsG) ?></span></h3></div>
+  <div class="card-body p0">
+    <div class="table-wrap" style="border:0;border-radius:0">
+    <table class="tbl">
+      <tbody>
+      <?php foreach ($itemsG as $it): ?>
+        <tr>
+          <td style="width:26px"><span class="dot-status ds-<?= e($it['tone']) ?>"></span></td>
+          <td>
+            <a class="notif-title" href="<?= u($it['url']) ?>"><?= e($it['title']) ?></a>
+            <div class="small muted"><?= e($it['desc']) ?></div>
+          </td>
+          <td class="small muted" style="white-space:nowrap"><?= tgl($it['time']) ?></td>
+          <td class="text-right" style="white-space:nowrap"><a class="btn btn-sm btn-outline" href="<?= u($it['url']) ?>"><?= e($it['action']) ?></a></td>
+        </tr>
+      <?php endforeach; ?>
+      </tbody>
+    </table>
+    </div>
   </div>
 </div>
 <?php endforeach; ?>

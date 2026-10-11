@@ -99,16 +99,21 @@ try {
 } catch (Throwable $e) { $penolakan = []; }
 ?>
 <div class="page-head">
-  <div><h1><?= iconSvg('chart') ?> Laporan</h1>
-    <p class="muted">Rekap kinerja layanan Bagian Umum-Pengadaan per periode terpilih.</p></div>
-  <form method="get" class="filter-bar">
-    <input type="date" name="from" value="<?= e($from) ?>"> <span class="muted">s/d</span>
-    <input type="date" name="to" value="<?= e($to) ?>">
-    <button class="btn btn-sm btn-primary"><?= iconSvg('search') ?> Tampilkan</button>
-  </form>
+  <div class="grow"><h1>Laporan</h1>
+    <p class="small muted">Rekap kinerja layanan Bagian Umum-Pengadaan per periode terpilih.</p></div>
 </div>
 
-<div class="stats">
+<div class="card mb"><div class="card-body">
+  <form method="get" class="filter-bar" style="margin:0">
+    <label class="small muted">Periode</label>
+    <input class="input" type="date" name="from" value="<?= e($from) ?>">
+    <span class="muted">s/d</span>
+    <input class="input" type="date" name="to" value="<?= e($to) ?>">
+    <button class="btn btn-sm btn-primary"><?= iconSvg('search') ?> Tampilkan</button>
+  </form>
+</div></div>
+
+<div class="grid g4" style="margin-bottom:20px">
   <?php
   $cards = [
     ['blue',   'file',     $kebBulan,            'Pengajuan Kebutuhan'],
@@ -118,21 +123,21 @@ try {
     ['red',    'alert',    $krkCount,            'Laporan Kerusakan'],
     ['amber',  'wrench',   $perfSelesai,         'Perbaikan Selesai'],
     ['slate',  'clipboard',$atkCount,            'Permintaan ATK'],
-    ['cyan',   'car',      $pinjamCount,         'Peminjaman Kendaraan'],
-    ['pink',   'lamp',     $fasCount,            'Tiket Fasilitas'],
-    ['orange', 'box',      $opnameCount,         'Stock Opname'],
-    ['green',  'money',    rupiah($nilaiSerah),  'Serah Terima (Rp)'],
-    ['amber',  'wrench',   rupiah($servisBiaya), 'Biaya Servis (Rp)'],
+    ['blue',   'car',      $pinjamCount,         'Peminjaman Kendaraan'],
+    ['amber',  'lamp',     $fasCount,            'Tiket Fasilitas'],
+    ['teal',   'box',      $opnameCount,         'Stock Opname'],
+    ['green',  'chart',    rupiah($nilaiSerah),  'Serah Terima (Rp)'],
+    ['red',    'wrench',   rupiah($servisBiaya), 'Biaya Servis (Rp)'],
   ];
   foreach ($cards as [$c, $i, $v, $l]): ?>
-    <div class="stat"><div class="s-ic <?= $c ?>"><?= iconSvg($i) ?></div><div><div class="s-val"><?= is_string($v) ? e($v) : (int)$v ?></div><div class="s-lbl"><?= e($l) ?></div></div></div>
+    <div class="stat"><div class="s-ic i-<?= $c ?>"><?= iconSvg($i) ?></div><div><div class="v"><?= is_string($v) ? e($v) : (int)$v ?></div><div class="l"><?= e($l) ?></div></div></div>
   <?php endforeach; ?>
 </div>
 
-<div class="grid-2" style="align-items:start">
+<div class="grid g2">
   <div class="card">
     <div class="card-head"><h3>Ekspor Data (CSV)</h3></div>
-    <div class="card-body export-grid">
+    <div class="card-body"><div class="actions" style="gap:10px">
       <?php foreach ([
         'aset'       => 'Inventaris Aset',
         'kebutuhan'  => 'Pengajuan Kebutuhan',
@@ -142,10 +147,11 @@ try {
         'pinjam'     => 'Peminjaman Kendaraan',
         'fasilitas'  => 'Tiket Fasilitas',
       ] as $k => $lbl): ?>
-        <a class="btn btn-outline" href="laporan.php?from=<?= e($from) ?>&to=<?= e($to) ?>&export=<?= $k ?>">
+        <a class="btn btn-outline" href="<?= u('modules/laporan.php?from=' . urlencode($from) . '&to=' . urlencode($to) . '&export=' . $k) ?>">
           <?= iconSvg('download') ?> <?= e($lbl) ?></a>
       <?php endforeach; ?>
-      <p class="muted small" style="grid-column:1/-1">Unduhan memakai periode tanggal yang sedang aktif (kecuali aset = seluruh data).</p>
+    </div>
+      <p class="muted small mt-2">Unduhan memakai periode tanggal yang sedang aktif (kecuali aset = seluruh data).</p>
     </div>
   </div>
 
@@ -206,27 +212,29 @@ try {
 
   <div class="card">
     <div class="card-head"><h3>Layanan Periode Ini</h3></div>
-    <div class="card-body kv-grid">
-      <div class="kv"><span>Kebutuhan selesai</span><b><?= $selesaiKeb ?>/<?= $kebBulan ?> (<?= $kebBulan ? round(100 * $selesaiKeb / $kebBulan) : 0 ?>%)</b></div>
-      <div class="kv"><span>Rencana → diterima</span><b><?= $rencanaTerima ?>/<?= $rencanaCount ?></b></div>
-      <div class="kv"><span>Penerimaan sesuai CK</span><b><?= $ckSesuai ?>/<?= $terimaPenerimaan ?></b></div>
-      <div class="kv"><span>ATK terealisasi penuh</span><b><?= $atkSelesai ?>/<?= $atkCount ?></b></div>
-      <div class="kv"><span>Kerusakan selesai</span><b><?= $krkSelesai ?>/<?= $krkCount ?></b></div>
-      <div class="kv"><span>Perbaikan berhasil</span><b><?= $perfSelesai ?> (gagal: <?= $perfGagal ?>)</b></div>
-      <div class="kv"><span>Pinjaman disetujui</span><b><?= $pinjamSetuju ?>/<?= $pinjamCount ?></b></div>
-      <div class="kv"><span>Fasilitas beres</span><b><?= $fasSelesai ?>/<?= $fasCount ?></b></div>
-      <div class="kv"><span>Servis tercatat</span><b><?= $servisCount ?> kejadian</b></div>
-      <div class="kv"><span>Opname stok</span><b><?= $opnameCount ?> sesi</b></div>
+    <div class="card-body">
+      <dl class="kv">
+        <dt>Kebutuhan selesai</dt><dd><?= $selesaiKeb ?>/<?= $kebBulan ?> (<?= $kebBulan ? round(100 * $selesaiKeb / $kebBulan) : 0 ?>%)</dd>
+        <dt>Rencana &rarr; diterima</dt><dd><?= $rencanaTerima ?>/<?= $rencanaCount ?></dd>
+        <dt>Penerimaan sesuai CK</dt><dd><?= $ckSesuai ?>/<?= $terimaPenerimaan ?></dd>
+        <dt>ATK terealisasi penuh</dt><dd><?= $atkSelesai ?>/<?= $atkCount ?></dd>
+        <dt>Kerusakan selesai</dt><dd><?= $krkSelesai ?>/<?= $krkCount ?></dd>
+        <dt>Perbaikan berhasil</dt><dd><?= $perfSelesai ?> (gagal: <?= $perfGagal ?>)</dd>
+        <dt>Pinjaman disetujui</dt><dd><?= $pinjamSetuju ?>/<?= $pinjamCount ?></dd>
+        <dt>Fasilitas beres</dt><dd><?= $fasSelesai ?>/<?= $fasCount ?></dd>
+        <dt>Servis tercatat</dt><dd><?= $servisCount ?> kejadian</dd>
+        <dt>Opname stok</dt><dd><?= $opnameCount ?> sesi</dd>
+      </dl>
     </div>
   </div>
 
   <div class="card">
     <div class="card-head"><h3>Penolakan / Revisi</h3></div>
-    <div class="card-body kv-grid">
-      <?php if (!$penolakan): ?><p class="muted">-</p><?php endif;
-      foreach ($penolakan as $k => $v): ?>
-        <div class="kv"><span><?= e($k) ?></span><b><?= (int)$v ?></b></div>
-      <?php endforeach; ?>
+    <div class="card-body">
+      <?php if (!$penolakan): ?><p class="muted small">Tidak ada penolakan pada periode ini.</p><?php else: ?>
+      <dl class="kv"><?php foreach ($penolakan as $k => $v): ?>
+        <dt><?= e($k) ?></dt><dd><?= (int)$v ?></dd>
+      <?php endforeach; ?></dl><?php endif; ?>
     </div>
   </div>
 </div>

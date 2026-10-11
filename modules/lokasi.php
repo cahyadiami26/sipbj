@@ -21,11 +21,11 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
         $ket      = trim($_POST['keterangan'] ?? '');
         if ($nama === '' || $kode === '') {
             flash('Nama dan kode lokasi wajib diisi.', 'error');
-            go('modules/lokasi.php');
+            go('modules/lokasi.php' . ($id ? "?edit=$id" : '?aksi=baru'));
         }
         //cegah duplikat kode
         $dup = qOne("SELECT id FROM lokasi WHERE kode=? AND id<>?", [$kode, $id]);
-        if ($dup) { flash("Kode \"$kode\" sudah dipakai.", 'error'); go('modules/lokasi.php'); }
+        if ($dup) { flash("Kode \"$kode\" sudah dipakai.", 'error'); go('modules/lokasi.php' . ($id ? "?edit=$id" : '?aksi=baru')); }
         //cegah self-parent
         if ($parent === $id) { flash('Induk tidak boleh dirinya sendiri.', 'error'); go('modules/lokasi.php'); }
 
@@ -77,98 +77,124 @@ foreach (qAll("SELECT lokasi_id, COUNT(*) c FROM aset WHERE status<>'DIHAPUS' GR
 
 $editId = (int)($_GET['edit'] ?? 0);
 $edit   = $editId ? qOne("SELECT * FROM lokasi WHERE id=?", [$editId]) : null;
+$showForm = $edit || ($_GET['aksi'] ?? '') === 'baru';
 
-function renderTreeNode(array $node, array &$jmlAset): void
+$tipeBadge = ['GEDUNG' => 'teal', 'LANTAI' => 'blue', 'RUANG' => 'slate'];
+$tipeIcon  = ['GEDUNG' => 'building', 'LANTAI' => 'swap', 'RUANG' => 'box'];
+
+/* flatten pohon menjadi daftar baris dengan indentasi */
+$treeRows = [];
+function walkTree(array $node, array $byId, array $jmlAset, int $depth, array &$out): void
 {
     $d = $node['data'];
-    $iconMap = ['GEDUNG' => 'building', 'LANTAI' => 'swap', 'RUANG' => 'box'];
-    ?>
-    <div class="tree-node">
-      <div class="tree-row lvl-<?= $d['tipe'] === 'GEDUNG' ? 1 : ($d['tipe'] === 'LANTAI' ? 2 : 3) ?>">
-        <span class="tree-ic"><?= iconSvg($iconMap[$d['tipe']] ?? 'box') ?></span>
-        <div class="tree-main">
-          <div class="tree-name"><?= e($d['nama']) ?>
-            <span class="badge badge-<?= $d['tipe'] === 'GEDUNG' ? 'teal' : ($d['tipe'] === 'LANTAI' ? 'blue' : 'slate') ?>"><?= e($d['tipe']) ?></span>
-            <?php if (!$d['is_active']): ?><span class="badge badge-red">NONAKTIF</span><?php endif; ?>
-          </div>
-          <div class="tree-sub muted small">
-            Kode: <b><?= e($d['kode']) ?></b>
-            &bull; <?= $jmlAset[$d['id']] ?? 0 ?> aset
-            <?= $d['keterangan'] ? ' &bull; ' . e($d['keterangan']) : '' ?>
-          </div>
-        </div>
-        <div class="tree-act">
-          <a class="btn btn-sm btn-outline" href="lokasi.php?edit=<?= $d['id'] ?>"><?= iconSvg('pencil') ?></a>
-          <form method="post" onsubmit="return confirm('Hapus lokasi <?= e(addslashes($d['nama'])) ?>?');" style="display:inline">
-            <?= csrfField() ?><input type="hidden" name="aksi" value="hapus"><input type="hidden" name="id" value="<?= $d['id'] ?>">
-            <button class="btn btn-sm btn-danger-x" title="Hapus"><?= iconSvg('trash') ?></button>
-          </form>
-        </div>
-      </div>
-      <?php if ($node['children']): ?><div class="tree-children"><?php
-        foreach ($node['children'] as $ch) renderTreeNode($ch, $jmlAset);
-      ?></div><?php endif; ?>
-    </div>
-    <?php
+    $out[] = [
+        'id' => $d['id'], 'nama' => $d['nama'], 'kode' => $d['kode'], 'tipe' => $d['tipe'],
+        'aktif' => (int)$d['is_active'], 'ket' => $d['keterangan'],
+        'aset' => $jmlAset[$d['id']] ?? 0, 'pad' => $depth * 26,
+    ];
+    foreach ($node['children'] as $ch) walkTree($ch, $byId, $jmlAset, $depth + 1, $out);
 }
+foreach ($roots as $n) walkTree($n, $byId, $jmlAset, 0, $treeRows);
 ?>
 <div class="page-head">
-  <div><h1><?= iconSvg('building') ?> Data Lokasi</h1>
-    <p class="muted">Struktur hierarki gedung, lantai, dan ruang kerja.</p></div>
+  <div class="grow">
+    <h1>Data Lokasi</h1>
+    <p class="small muted">Struktur hierarki gedung, lantai, dan ruang kerja.</p>
+  </div>
+  <div class="btn-group">
+    <?php if (!$showForm): ?><a class="btn btn-primary" href="<?= u('modules/lokasi.php?aksi=baru') ?>"><?= iconSvg('plus') ?> Tambah Lokasi</a><?php endif; ?>
+  </div>
 </div>
 
-<div class="grid-2" style="grid-template-columns: 360px 1fr; align-items:start;">
-  <!-- form -->
-  <div class="card">
-    <div class="card-head"><h3><?= $edit ? 'Edit Lokasi' : 'Tambah Lokasi' ?></h3></div>
-    <form method="post" class="card-body form-grid">
+<?php if ($showForm): ?>
+<div class="card">
+  <div class="card-head"><h3><?= $edit ? 'Edit Lokasi — ' . e($edit['nama']) : 'Tambah Lokasi' ?></h3>
+    <a class="btn btn-sm btn-ghost" href="<?= u('modules/lokasi.php') ?>">Tutup &times;</a></div>
+  <div class="card-body">
+    <form method="post">
       <?= csrfField() ?>
       <input type="hidden" name="aksi" value="simpan">
       <input type="hidden" name="id" value="<?= (int)($edit['id'] ?? 0) ?>">
-      <label>Nama Lokasi *
-        <input type="text" name="nama" required maxlength="100" value="<?= e($edit['nama'] ?? '') ?>" placeholder="cth: Ruang Direktur">
-      </label>
-      <label>Kode *
-        <input type="text" name="kode" required maxlength="20" value="<?= e($edit['kode'] ?? '') ?>" placeholder="cth: R-DIR" style="text-transform:uppercase">
-      </label>
-      <label>Tipe
-        <select name="tipe" id="tipeLoc">
-          <?php foreach (['GEDUNG', 'LANTAI', 'RUANG'] as $t): ?>
-            <option value="<?= $t ?>" <?= ($edit['tipe'] ?? 'RUANG') === $t ? 'selected' : '' ?>><?= $t ?></option>
-          <?php endforeach; ?>
-        </select>
-      </label>
-      <label>Induk (opsional)
-        <select name="parent_id">
-          <option value="0">— Tanpa induk (Gedung) —</option>
-          <?php foreach ($rows as $r): if ($edit && $r['id'] == $edit['id']) continue; ?>
-            <option value="<?= $r['id'] ?>" <?= ((int)($edit['parent_id'] ?? 0)) === (int)$r['id'] ? 'selected' : '' ?>>
-              <?= str_repeat('— ', $r['tipe'] === 'RUANG' ? 2 : ($r['tipe'] === 'LANTAI' ? 1 : 0)) ?>[<?= e($r['tipe']) ?>] <?= e($r['nama']) ?>
-            </option>
-          <?php endforeach; ?>
-        </select>
-      </label>
-      <label>Keterangan
-        <input type="text" name="keterangan" maxlength="255" value="<?= e($edit['keterangan'] ?? '') ?>">
-      </label>
-      <?php if ($edit): ?>
-        <label class="check-row"><input type="checkbox" name="is_active" value="1" <?= $edit['is_active'] ? 'checked' : '' ?>> <span class="chk-box"></span>&nbsp;Aktif</label>
-      <?php endif; ?>
-      <div class="btn-row">
-        <button class="btn btn-primary"><?= iconSvg('check') ?> <?= $edit ? 'Simpan Perubahan' : 'Tambah' ?></button>
-        <?php if ($edit): ?><a class="btn btn-ghost" href="lokasi.php">Batal</a><?php endif; ?>
+      <div class="form-grid">
+        <div class="field"><label>Nama Lokasi <span class="req">*</span></label>
+          <input class="input" type="text" name="nama" maxlength="100" required value="<?= e($edit['nama'] ?? '') ?>" placeholder="cth: Ruang Direktur"></div>
+        <div class="field"><label>Kode <span class="req">*</span></label>
+          <input class="input mono" type="text" name="kode" maxlength="20" required value="<?= e($edit['kode'] ?? '') ?>" placeholder="cth: R-DIR"></div>
+        <div class="field"><label>Tipe</label>
+          <select class="input" name="tipe">
+            <?php foreach (['GEDUNG', 'LANTAI', 'RUANG'] as $t): ?>
+              <option value="<?= $t ?>" <?= ($edit['tipe'] ?? 'RUANG') === $t ? 'selected' : '' ?>><?= $t ?></option>
+            <?php endforeach; ?>
+          </select></div>
+        <div class="field"><label>Induk <span class="help">(opsional)</span></label>
+          <select class="input" name="parent_id">
+            <option value="0">— Tanpa induk (Gedung) —</option>
+            <?php foreach ($rows as $r): if ($edit && $r['id'] == $edit['id']) continue; ?>
+              <option value="<?= $r['id'] ?>" <?= ((int)($edit['parent_id'] ?? 0)) === (int)$r['id'] ? 'selected' : '' ?>>
+                [<?= e($r['tipe']) ?>] <?= e($r['nama']) ?>
+              </option>
+            <?php endforeach; ?>
+          </select></div>
+        <div class="field full"><label>Keterangan</label>
+          <input class="input" type="text" name="keterangan" maxlength="255" value="<?= e($edit['keterangan'] ?? '') ?>"></div>
+        <?php if ($edit): ?>
+        <div class="field"><label class="checkline" style="margin:0">
+          <input type="checkbox" name="is_active" value="1" <?= $edit['is_active'] ? 'checked' : '' ?>> Lokasi aktif</label></div>
+        <?php endif; ?>
+      </div>
+      <div class="mt actions">
+        <button class="btn btn-primary"><?= iconSvg('check') ?> <?= $edit ? 'Simpan Perubahan' : 'Tambah Lokasi' ?></button>
+        <a class="btn btn-outline" href="<?= u('modules/lokasi.php') ?>">Batal</a>
       </div>
     </form>
   </div>
-
-  <!-- tree -->
-  <div class="card">
-    <div class="card-head"><h3>Struktur Lokasi (<?= count($rows) ?>)</h3></div>
-    <div class="card-body">
-      <?php if (!$roots): ?>
-        <p class="muted">Belum ada data lokasi.</p>
-      <?php else: foreach ($roots as $n) renderTreeNode($n, $jmlAset); endif; ?>
-    </div>
-  </div>
 </div>
+<?php endif; ?>
+
+<div class="card mb"><div class="card-body">
+  <div class="filter-bar" style="margin:0">
+    <span class="chip"><?= count($rows) ?> lokasi terdaftar</span>
+    <span class="chip">Gedung: <?= count(array_filter($rows, fn($r) => $r['tipe'] === 'GEDUNG')) ?></span>
+    <span class="chip">Lantai: <?= count(array_filter($rows, fn($r) => $r['tipe'] === 'LANTAI')) ?></span>
+    <span class="chip">Ruang: <?= count(array_filter($rows, fn($r) => $r['tipe'] === 'RUANG')) ?></span>
+  </div>
+</div></div>
+
+<div class="card"><div class="card-body p0">
+  <div class="table-wrap" style="border:0;border-radius:0">
+  <table class="tbl">
+    <thead><tr><th>Nama Lokasi</th><th>Kode</th><th>Tipe</th><th>Aset</th><th>Keterangan</th><th>Status</th><th class="text-right">Aksi</th></tr></thead>
+    <tbody>
+    <?php if (!$treeRows): ?>
+      <tr><td colspan="7" class="empty"><?= iconSvg('building') ?><br>Belum ada data lokasi.<br><a class="btn btn-sm btn-primary mt-2" href="<?= u('modules/lokasi.php?aksi=baru') ?>">Tambah Sekarang</a></td></tr>
+    <?php endif; ?>
+    <?php foreach ($treeRows as $t): ?>
+    <tr>
+      <td>
+        <span style="display:inline-flex;align-items:center;gap:9px;padding-left:<?= (int)$t['pad'] ?>px">
+          <span class="dot-status <?= $t['tipe'] === 'GEDUNG' ? 'ds-teal' : ($t['tipe'] === 'LANTAI' ? 'ds-blue' : 'ds-slate') ?>"></span>
+          <?= $t['pad'] > 0 ? '<span class="muted">&mdash; </span>' : '' ?>
+          <b><?= e($t['nama']) ?></b>
+        </span>
+      </td>
+      <td class="mono"><?= e($t['kode']) ?></td>
+      <td><span class="badge badge-<?= $tipeBadge[$t['tipe']] ?? 'slate' ?>"><?= e($t['tipe']) ?></span></td>
+      <td class="num"><?= (int)$t['aset'] ?></td>
+      <td class="small muted"><?= e($t['ket'] ?: '-') ?></td>
+      <td><?= $t['aktif'] ? '<span class="badge badge-green">AKTIF</span>' : '<span class="badge badge-red">NONAKTIF</span>' ?></td>
+      <td class="text-right">
+        <div class="actions" style="justify-content:flex-end">
+          <a class="btn btn-sm btn-outline" href="<?= u('modules/lokasi.php?edit=' . $t['id']) ?>" title="Edit"><?= iconSvg('pencil') ?></a>
+          <form method="post" data-confirm="Hapus lokasi &quot;<?= e($t['nama']) ?>&quot;?">
+            <?= csrfField() ?><input type="hidden" name="aksi" value="hapus"><input type="hidden" name="id" value="<?= (int)$t['id'] ?>">
+            <button class="btn btn-sm btn-danger" title="Hapus"><?= iconSvg('trash') ?></button>
+          </form>
+        </div>
+      </td>
+    </tr>
+    <?php endforeach; ?>
+    </tbody>
+  </table>
+  </div>
+</div></div>
 <?php require_once __DIR__ . '/../includes/footer.php'; ?>

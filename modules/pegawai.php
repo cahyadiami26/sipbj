@@ -54,36 +54,37 @@ $optBidang = unitOptions();
 $totalAktif = count(array_filter($pegawai, fn($p) => (int)$p['is_active'] === 1));
 ?>
 <div class="page-head">
-  <div><h1><?= iconSvg('users') ?> Data Pegawai</h1>
-    <p class="muted">Terhubung langsung (sync) dengan tabel <code>users</code> pada database SSO. Data induk dikelola melalui portal LJU.</p></div>
+  <div class="grow"><h1>Data Pegawai</h1>
+    <p class="small muted">Terhubung langsung (sync) dengan tabel <code>users</code> pada database SSO. Data induk dikelola melalui portal LJU.</p></div>
 </div>
 
-<div class="stats" style="grid-template-columns:repeat(auto-fit,minmax(180px,1fr))">
-  <div class="stat"><div class="s-ic teal"><?= iconSvg('users') ?></div><div><div class="s-val"><?= count($pegawai) ?></div><div class="s-lbl">Total Hasil Ditampilkan</div></div></div>
-  <div class="stat"><div class="s-ic green"><?= iconSvg('check') ?></div><div><div class="s-val"><?= $totalAktif ?></div><div class="s-lbl">Status Aktif</div></div></div>
-  <div class="stat"><div class="s-ic red"><?= iconSvg('alert') ?></div><div><div class="s-val"><?= count($pegawai) - $totalAktif ?></div><div class="s-lbl">Nonaktif</div></div></div>
+<div class="grid g3" style="margin-bottom:20px">
+  <div class="stat"><div class="s-ic i-teal"><?= iconSvg('users') ?></div><div><div class="v"><?= count($pegawai) ?></div><div class="l">Total Hasil Ditampilkan</div></div></div>
+  <div class="stat"><div class="s-ic i-green"><?= iconSvg('check') ?></div><div><div class="v"><?= $totalAktif ?></div><div class="l">Status Aktif</div></div></div>
+  <div class="stat"><div class="s-ic i-red"><?= iconSvg('alert') ?></div><div><div class="v"><?= count($pegawai) - $totalAktif ?></div><div class="l">Nonaktif</div></div></div>
 </div>
 
 <div class="card">
-  <div class="card-head">
-    <h3>Daftar Pegawai</h3>
-    <form method="get" class="filter-bar">
-      <input type="text" name="cari" placeholder="Cari nama / NIP / email…" value="<?= e($cari) ?>">
-      <select name="bidang"><option value="">Semua Bidang</option>
-        <?php foreach ($optBidang as $o): ?><option <?= $bidang===$o?'selected':'' ?>><?= e($o) ?></option><?php endforeach; ?>
+  <div class="card-head"><h3>Daftar Pegawai</h3></div>
+  <div class="card-body">
+    <form method="get" class="filter-bar" style="margin:0">
+      <input class="input" type="text" name="cari" placeholder="Cari nama / NIP / email…" value="<?= e($cari) ?>">
+      <select class="input" name="bidang"><option value="">Semua Bidang</option>
+        <?php foreach ($optBidang as $o): ?><option value="<?= e($o) ?>" <?= $bidang===$o?'selected':'' ?>><?= e($o) ?></option><?php endforeach; ?>
       </select>
-      <select name="divisi"><option value="">Semua Divisi</option>
-        <?php foreach ($optDivisi as $o): ?><option <?= $divisi===$o?'selected':'' ?>><?= e($o) ?></option><?php endforeach; ?>
+      <select class="input" name="divisi"><option value="">Semua Divisi</option>
+        <?php foreach ($optDivisi as $o): ?><option value="<?= e($o) ?>" <?= $divisi===$o?'selected':'' ?>><?= e($o) ?></option><?php endforeach; ?>
       </select>
-      <select name="status"><option value="">Semua Status</option>
+      <select class="input" name="status"><option value="">Semua Status</option>
         <option value="AKTIF" <?= $status==='AKTIF'?'selected':'' ?>>Aktif</option>
         <option value="NONAKTIF" <?= $status==='NONAKTIF'?'selected':'' ?>>Nonaktif</option>
       </select>
       <button class="btn btn-sm btn-primary"><?= iconSvg('search') ?> Filter</button>
-      <a class="btn btn-sm btn-ghost" href="pegawai.php">Reset</a>
+      <a class="btn btn-sm btn-ghost" href="<?= u('modules/pegawai.php') ?>">Reset</a>
     </form>
   </div>
-  <div class="table-wrap">
+  <div class="card-body p0">
+  <div class="table-wrap" style="border:0;border-radius:0">
     <table class="tbl">
       <thead><tr>
         <th>Pegawai</th><th>NIP / ID</th><th>Jabatan</th><th>Nama Bidang</th><th>Nama Divisi</th>
@@ -96,7 +97,8 @@ $totalAktif = count(array_filter($pegawai, fn($p) => (int)$p['is_active'] === 1)
         <tr>
           <td>
             <div class="user-cell">
-              <img class="avatar-sm" src="<?= AVATAR_BASE . e(rawurlencode($p['avatar'] ?: '')) ?>" alt="" onerror="this.src='<?= DEFAULT_AVATAR ?>'">
+              <?php $av = !empty($p['avatar']) ? AVATAR_BASE . rawurlencode($p['avatar']) : DEFAULT_AVATAR; ?>
+              <img class="avatar avatar-sm" src="<?= e($av) ?>" alt="" onerror="this.outerHTML='&lt;div class=\\'avatar-fallback avatar-sm\\'&gt;<?= e(initials($p['name'])) ?>&lt;/div&gt;'">
               <div><b><?= e($p['name']) ?></b><div class="muted small">@<?= e($p['username']) ?></div></div>
             </div>
           </td>
@@ -106,24 +108,25 @@ $totalAktif = count(array_filter($pegawai, fn($p) => (int)$p['is_active'] === 1)
           <td><?= e($p['department'] ?: '-') ?></td>
           <td class="small"><?= e($p['email'] ?: '-') ?></td>
           <td class="small"><?= e($hpMap[$p['id']] ?? '-') ?></td>
-          <td><?= $p['is_active'] ? badge('DITERIMA') : badge('DITOLAK') /* reuse warna */ ?></td>
-          <td style="white-space:nowrap">
-            <button class="btn btn-sm btn-outline" onclick="toggleHp(<?= $p['id'] ?>)">Set HP</button>
+          <td><?= $p['is_active'] ? '<span class="badge badge-green">AKTIF</span>' : '<span class="badge badge-slate">NONAKTIF</span>' ?></td>
+          <td class="text-right" style="white-space:nowrap">
+            <button class="btn btn-sm btn-outline" onclick="toggleHp(<?= (int)$p['id'] ?>)">Set HP</button>
           </td>
         </tr>
-        <tr id="hprow-<?= $p['id'] ?>" style="display:none;background:#f8fafc">
+        <tr id="hprow-<?= (int)$p['id'] ?>" style="display:none">
           <td colspan="9">
-            <form method="post" class="inline-form" style="padding:6px 4px">
-              <?= csrfField() ?><input type="hidden" name="aksi" value="set_hp"><input type="hidden" name="id" value="<?= $p['id'] ?>">
-              <label class="small muted" style="margin-right:8px">Nomor HP <?= e($p['name']) ?>:</label>
-              <input type="text" name="nomor_hp" value="<?= e($hpMap[$p['id']] ?? '') ?>" placeholder="08xxxxxxxxxx" style="width:220px">
-              <button class="btn btn-sm btn-primary">Simpan</button>
+            <form method="post" class="inline-form">
+              <?= csrfField() ?><input type="hidden" name="aksi" value="set_hp"><input type="hidden" name="id" value="<?= (int)$p['id'] ?>">
+              <span class="small muted">Nomor HP <?= e($p['name']) ?>:</span>
+              <input class="input" type="text" name="nomor_hp" value="<?= e($hpMap[$p['id']] ?? '') ?>" placeholder="08xxxxxxxxxx" style="max-width:240px">
+              <button class="btn btn-sm btn-primary"><?= iconSvg('check') ?> Simpan</button>
             </form>
           </td>
         </tr>
       <?php endforeach; ?>
       </tbody>
     </table>
+  </div>
   </div>
 </div>
 <script>
